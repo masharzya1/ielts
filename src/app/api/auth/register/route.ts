@@ -13,12 +13,10 @@ export async function POST(req: Request) {
 
     const supabaseAdmin = createAdminClient();
 
-    // 1. Create user using signUp (it will handle auth settings correctly)
-    // But since the user wants to use Resend, we'll use generateLink
     const { data: signUpData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // Don't auto-confirm
+      email_confirm: false,
       user_metadata: {
         full_name: fullName,
       },
@@ -32,10 +30,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
     }
 
-    // 2. Generate confirmation link
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .upsert({
+        id: signUpData.user.id,
+        full_name: fullName,
+        email: email,
+        role: "user",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+    }
+
+    // solve this problem generate email verification link
+
+
+
+
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email: email,
+      password: password,
       options: {
         redirectTo: `${new URL(req.url).origin}/auth/callback`,
       }
@@ -46,7 +64,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to generate verification link' }, { status: 500 });
     }
 
-    // 3. Send custom email via Resend
     const verificationUrl = linkData.properties.action_link;
     
     const emailResult = await sendEmail({
@@ -60,7 +77,6 @@ export async function POST(req: Request) {
 
     if (!emailResult.success) {
       console.error('Verification email failed:', emailResult.error);
-      // We still return success for user creation but mention email failed
       return NextResponse.json({ 
         success: true, 
         message: 'User created but verification email failed to send. Please contact support.',

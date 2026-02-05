@@ -188,14 +188,32 @@ export default function DashboardPage() {
       if (!subsRes.error) setSubscriptions((subsRes.data as any) || []);
 
       if (profileRes.error) {
-        // if RLS or other issue, log it
         console.error("Profile fetch error:", profileRes.error);
         setProfile(null);
         setNeedsInfo(true);
       } else {
         const prof = (profileRes.data as any) as Profile | null;
-        setProfile(prof);
-        setNeedsInfo(!prof?.target_score);
+        if (!prof) {
+          const { error: createErr } = await supabase
+            .from("profiles")
+            .upsert({
+              id: authUser.id,
+              email: authUser.email,
+              full_name: authUser.user_metadata?.full_name || "",
+              role: "user",
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "id" });
+          
+          if (createErr) {
+            console.error("Profile auto-create error:", createErr);
+          }
+          setProfile(null);
+          setNeedsInfo(true);
+        } else {
+          setProfile(prof);
+          setNeedsInfo(!prof?.target_score);
+        }
       }
 
       setLoading(false);

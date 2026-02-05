@@ -82,6 +82,8 @@ export default function IELTSPracticeBDInterface({
   const [noteText, setNoteText] = useState("");
   const [selectedText, setSelectedText] = useState("");
   const [passageHtml, setPassageHtml] = useState<string>("");
+  // Writing reference image: prevent layout jump + handle slow loading
+  const [writingImageLoaded, setWritingImageLoaded] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [writingDrafts, setWritingDrafts] = useState<Record<string, string>>({});
   
@@ -97,6 +99,12 @@ export default function IELTSPracticeBDInterface({
     const bySection = questions.find((q: any) => q.section_id && q.section_id === currentPart?.section_id);
     return bySection?.id || "";
   }, [sectionType, questions, currentPart?.id, currentPart?.section_id]);
+
+  // Reset writing reference image loaded state when part/image changes
+  useEffect(() => {
+    if (sectionType !== "writing") return;
+    setWritingImageLoaded(false);
+  }, [sectionType, currentPartIndex, currentPart?.image_url]);
 
   useEffect(() => {
     if (!currentPart?.id) return;
@@ -483,11 +491,17 @@ export default function IELTSPracticeBDInterface({
                       {currentPart?.image_url && (
                         <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm space-y-6">
                           <h3 className="font-black text-gray-400 uppercase tracking-[0.2em] text-[10px]">Reference Diagram</h3>
-                          <div className="relative group">
-                            <img 
-                              src={currentPart.image_url} 
-                              alt="Writing Task Reference" 
-                              className="w-full rounded-2xl border border-gray-100 shadow-lg transition-transform group-hover:scale-[1.01]"
+                          <div className="relative w-full aspect-video rounded-2xl border border-gray-100 shadow-lg overflow-hidden">
+                            {!writingImageLoaded && (
+                              <div className="absolute inset-0 animate-pulse bg-gray-100" />
+                            )}
+                            <img
+                              src={currentPart.image_url}
+                              alt="Writing Task Reference"
+                              loading="eager"
+                              onLoad={() => setWritingImageLoaded(true)}
+                              onError={() => setWritingImageLoaded(true)}
+                              className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${writingImageLoaded ? "opacity-100" : "opacity-0"}`}
                             />
                           </div>
                         </div>

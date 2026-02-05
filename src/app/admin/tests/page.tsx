@@ -51,11 +51,29 @@ interface MockTest {
   test_category?: string;
   is_cambridge?: boolean;
   is_micro?: boolean;
+  slug: string;
 }
 
 function AdminTestsContent() {
   const searchParams = useSearchParams();
-  const type = (searchParams.get("type") as "mock" | "practice") || "mock";
+  const type = searchParams.get("type") || "mock";
+  
+  const getFilterConfig = () => {
+    switch (type) {
+      case "sample":
+        return { title: "Sample Tests", icon: "sample", filter: { test_category: "sample" } };
+      case "micro":
+        return { title: "Micro Tests", icon: "micro", filter: { is_micro: true } };
+      case "cambridge":
+        return { title: "Cambridge Tests", icon: "cambridge", filter: { is_cambridge: true } };
+      case "practice":
+        return { title: "Practice Tests", icon: "practice", filter: { test_type: "practice" } };
+      default:
+        return { title: "Mock Tests", icon: "mock", filter: { test_type: "mock" } };
+    }
+  };
+  
+  const config = getFilterConfig();
   
   const [tests, setTests] = useState<MockTest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,20 +89,30 @@ function AdminTestsContent() {
     const [scheduledAt, setScheduledAt] = useState("");
     const [module, setModule] = useState("");
     const [testCategory, setTestCategory] = useState("");
-    const [isCambridge, setIsCambridge] = useState(false);
-    const [isMicro, setIsMicro] = useState(false);
+    const [isCambridge, setIsCambridge] = useState(type === "cambridge");
+    const [isMicro, setIsMicro] = useState(type === "micro");
     const [liveToPreviousMinutes, setLiveToPreviousMinutes] = useState("180");
     const [submitting, setSubmitting] = useState(false);
 
-    // Fetch tests based on the current type. Defined with useCallback so it can be reused
     const fetchTests = useCallback(async (signal?: AbortSignal) => {
       setLoading(true);
       const supabase = createClient();
       try {
-        const { data, error } = await supabase
-          .from("mock_tests")
-          .select("*")
-          .eq("test_type", type)
+        let query = supabase.from("mock_tests").select("*");
+        
+        if (type === "sample") {
+          query = query.eq("test_category", "sample");
+        } else if (type === "micro") {
+          query = query.eq("is_micro", true);
+        } else if (type === "cambridge") {
+          query = query.eq("is_cambridge", true);
+        } else if (type === "practice") {
+          query = query.eq("test_type", "practice");
+        } else {
+          query = query.eq("test_type", "mock");
+        }
+        
+        const { data, error } = await query
           .order("created_at", { ascending: false })
           .abortSignal(signal!);
         if (error) throw error;
@@ -126,12 +154,12 @@ function AdminTestsContent() {
           description,
           price: isFree ? 0 : parseFloat(price),
           is_free: isFree,
-          test_type: type,
+          test_type: type === "practice" ? "practice" : "mock",
           scheduled_at: type === "mock" && scheduledAt ? new Date(scheduledAt).toISOString() : null,
           module: type === "practice" ? module : null,
-          test_category: testCategory || (type === "practice" ? "practice" : "mock"),
-          is_cambridge: isCambridge,
-          is_micro: isMicro,
+          test_category: type === "sample" ? "sample" : (testCategory || (type === "practice" ? "practice" : "mock")),
+          is_cambridge: type === "cambridge" || isCambridge,
+          is_micro: type === "micro" || isMicro,
           live_to_previous_minutes: type === "mock" ? parseInt(liveToPreviousMinutes) || 180 : null,
           is_published: true,
         })
@@ -141,7 +169,7 @@ function AdminTestsContent() {
       if (error) {
         toast.error("Failed to create test: " + error.message);
       } else {
-        toast.success(`${type === "mock" ? "Mock" : "Practice"} created successfully`);
+        toast.success(`${config.title.slice(0, -1)} created successfully`);
         setIsCreateOpen(false);
         resetForm();
         fetchTests();
@@ -234,11 +262,19 @@ function AdminTestsContent() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            {type === "mock" ? <Clock className="h-8 w-8 text-primary" /> : <BookOpen className="h-8 w-8 text-green-500" />}
-            {type === "mock" ? "Mock Test Management" : "Practice Management"}
+            {type === "mock" && <Clock className="h-8 w-8 text-primary" />}
+            {type === "practice" && <BookOpen className="h-8 w-8 text-green-500" />}
+            {type === "sample" && <CheckCircle2 className="h-8 w-8 text-blue-500" />}
+            {type === "micro" && <Clock className="h-8 w-8 text-orange-500" />}
+            {type === "cambridge" && <BookOpen className="h-8 w-8 text-purple-500" />}
+            {config.title}
           </h1>
           <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs mt-1">
-            {type === "mock" ? "Schedule and price live exams" : "Manage 1-year access materials"}
+            {type === "mock" ? "Schedule and price live exams" : 
+             type === "sample" ? "Free sample tests for students" :
+             type === "micro" ? "Quick micro tests" :
+             type === "cambridge" ? "Cambridge official test materials" :
+             "Manage practice materials"}
           </p>
         </div>
         
@@ -247,15 +283,15 @@ function AdminTestsContent() {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className={`gap-2 shadow-lg rounded-xl h-12 px-6 font-bold ${type === 'practice' ? 'bg-green-600 hover:bg-green-700' : ''}`}>
+            <Button className={`gap-2 shadow-lg rounded-xl h-12 px-6 font-bold ${type === 'practice' ? 'bg-green-600 hover:bg-green-700' : type === 'cambridge' ? 'bg-purple-600 hover:bg-purple-700' : type === 'sample' ? 'bg-blue-600 hover:bg-blue-700' : type === 'micro' ? 'bg-orange-600 hover:bg-orange-700' : ''}`}>
               <Plus className="h-5 w-5" />
-              Add New {type === "mock" ? "Mock" : "Practice"}
+              Add New {config.title.slice(0, -1)}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] rounded-[2rem]">
             <form onSubmit={handleCreateTest}>
               <DialogHeader>
-                <DialogTitle className="text-2xl font-black">Create {type === "mock" ? "Mock" : "Practice"}</DialogTitle>
+                <DialogTitle className="text-2xl font-black">Create {config.title.slice(0, -1)}</DialogTitle>
                 <DialogDescription className="font-medium">
                   Fill in the details for the new IELTS content.
                 </DialogDescription>
@@ -573,7 +609,7 @@ function AdminTestsContent() {
 
               <CardFooter className="px-8 pb-8 pt-0">
                 <Button asChild variant="default" className={`w-full rounded-2xl h-14 font-black text-base shadow-lg transition-all duration-300 group ${type === 'practice' ? 'bg-green-600 hover:bg-green-700 shadow-green-500/20' : 'shadow-primary/20 hover:scale-[1.02]'}`}>
-                  <Link href={`/admin/tests/${test.id}`} className="flex items-center justify-center gap-2">
+                  <Link href={`/admin/mock/${test.id}`} className="flex items-center justify-center gap-2">
                     Manage Modules
                     <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Link>

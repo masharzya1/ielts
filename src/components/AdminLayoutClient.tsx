@@ -14,7 +14,10 @@ import {
   BarChart3,
   Calendar,
   Sparkles,
-  Mail
+  Mail,
+  GraduationCap,
+  Zap,
+  Library
 } from "lucide-react";
 import Link from "next/link";
 import { 
@@ -47,6 +50,9 @@ export default function AdminLayoutClient({
         { label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
         { label: "Users", icon: Users, href: "/admin/users" },
         { label: "Mock Tests", icon: BookOpen, href: "/admin/mock" },
+        { label: "Sample Tests", icon: GraduationCap, href: "/admin/tests?type=sample" },
+        { label: "Micro Tests", icon: Zap, href: "/admin/tests?type=micro" },
+        { label: "Cambridge Tests", icon: Library, href: "/admin/tests?type=cambridge" },
         { label: "Pre-bookings", icon: Calendar, href: "/admin/pre-bookings" },
         { label: "Practice", icon: FileText, href: "/admin/practice" },
         { label: "Vocab", icon: Sparkles, href: "/admin/vocab" },

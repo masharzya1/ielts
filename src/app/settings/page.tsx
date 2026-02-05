@@ -147,7 +147,8 @@ export default function SettingsPage() {
     const supabase = createClient();
     const { error } = await supabase
       .from("profiles")
-      .update({
+      .upsert({
+        id: user.id,
         full_name: profile.full_name,
         phone: profile.phone,
         target_score: profile.target_score,
@@ -156,9 +157,10 @@ export default function SettingsPage() {
         exam_date: profile.exam_date || null,
         institution: profile.institution,
         address: profile.address,
+        avatar_url: profile.avatar_url,
+        email: user.email,
         updated_at: new Date().toISOString()
-      })
-      .eq("id", user.id);
+      }, { onConflict: "id" });
 
     if (error) {
       toast.error("প্রোফাইল আপডেট করতে সমস্যা হয়েছে: " + error.message);

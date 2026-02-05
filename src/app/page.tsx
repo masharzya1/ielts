@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, CheckCircle2, Zap, Target, Award, Sparkles, Brain, ChevronDown, Calendar, Clock, X, Timer, Users, Trophy } from "lucide-react";
+import { ArrowRight, BookOpen, Lock, Zap, Target, Award, Sparkles, Brain, ChevronDown, Calendar, Clock, X, Timer, Users, Trophy } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
@@ -151,96 +151,211 @@ export default function Home() {
     }
     return null;
   }, [liveTest, isEnrolled]);
-
   useEffect(() => {
+    // Register plugin inside useEffect for safety in Next.js
     gsap.registerPlugin(ScrollTrigger);
+
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-      tl.from(".hero-badge", { y: -20, opacity: 0, duration: 0.4 })
-        .from(".hero-title span", { y: 60, opacity: 0, duration: 0.6, stagger: 0.1 }, "-=0.2")
-        .from(".hero-desc", { y: 20, opacity: 0, duration: 0.5 }, "-=0.3")
-        .from(".hero-cta-btn", { scale: 0.9, opacity: 0, duration: 0.4 }, "-=0.2")
-        .from(".live-mock-box", { y: 30, opacity: 0, duration: 0.6 }, "-=0.4");
+      // Hero animations - Ultra Fast & Creative
+      const tl = gsap.timeline({
+        defaults: { ease: "power4.out" }
+      });
+      
+      tl.from(".hero-badge", {
+        y: -20,
+        opacity: 0,
+        duration: 0.4,
+      })
+      .from(".hero-title span", {
+        y: 60,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.1,
+      }, "-=0.2")
+      .from(".hero-desc", {
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+      }, "-=0.3")
+      .from(".hero-cta-btn", {
+        scale: 0.9,
+        opacity: 0,
+        duration: 0.4,
+      }, "-=0.2")
+      .from(".benefit-badge", {
+        y: 10,
+        opacity: 0,
+        duration: 0.4,
+        stagger: 0.05,
+      }, "-=0.2");
+
+        // Interactive mouse follow for grid glow effect
+        const handleMouseMove = (e: MouseEvent) => {
+          // // Disable mouse effect in light mode
+          // const isDark = document.documentElement.classList.contains('dark');
+          // if (!isDark) return;
+
+          const { clientX, clientY } = e;
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (rect) {
+          const x = clientX - rect.left;
+          const y = clientY - rect.top;
+          
+          // Move the glow
+          gsap.to(".mouse-glow", {
+            x,
+            y,
+            duration: 0.8,
+            ease: "power2.out",
+          });
+
+          // Move bubbles with different speeds for depth
+          gsap.to(".hero-bubble-1", { x: (x - rect.width / 2) * 0.05, y: (y - rect.height / 2) * 0.05, duration: 1.5, ease: "power2.out" });
+          gsap.to(".hero-bubble-2", { x: -(x - rect.width / 2) * 0.03, y: -(y - rect.height / 2) * 0.03, duration: 2, ease: "power2.out" });
+          gsap.to(".hero-bubble-3", { x: (x - rect.width / 2) * 0.02, y: -(y - rect.height / 2) * 0.04, duration: 2.5, ease: "power2.out" });
+          gsap.to(".hero-bubble-4", { x: (x - rect.width / 2) * 0.04, y: (y - rect.height / 2) * 0.02, duration: 1.8, ease: "power2.out" });
+          gsap.to(".hero-bubble-5", { x: -(x - rect.width / 2) * 0.06, y: (y - rect.height / 2) * 0.03, duration: 2.2, ease: "power2.out" });
+        }
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+
+      // Subtle floating for benefit badges
+      gsap.to(".benefit-badge", {
+        y: -4,
+        duration: 2,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        stagger: {
+          each: 0.2,
+          from: "random"
+        }
+      });
+
+      // Background elements animation
+      gsap.to(".bg-blob", {
+        x: "random(-20, 20)",
+        y: "random(-20, 20)",
+        duration: 5,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        stagger: 1
+      });
+
+      // Bubble floating animation
+      [1, 2, 3, 4, 5].forEach((i) => {
+        gsap.to(`.hero-bubble-${i}`, {
+          x: "random(-30, 30)",
+          y: "random(-30, 30)",
+          scale: "random(0.9, 1.1)",
+          duration: "random(3, 5)",
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+          delay: i * 0.2
+        });
+      });
+
+      // Scroll animations
+      gsap.utils.toArray(".fade-up").forEach((el: any) => {
+        gsap.from(el, {
+          scrollTrigger: {
+            trigger: el,
+            start: "top 90%",
+          },
+          y: 30,
+          opacity: 0,
+          duration: 0.5,
+          ease: "power3.out",
+        });
+      });
+
+      gsap.utils.toArray(".stagger-item").forEach((el: any, i: number) => {
+        gsap.from(el, {
+          scrollTrigger: {
+            trigger: el,
+            start: "top 95%",
+          },
+          y: 20,
+          opacity: 0,
+          duration: 0.4,
+          delay: i * 0.05,
+          ease: "power2.out",
+        });
+      });
+
+      return () => window.removeEventListener("mousemove", handleMouseMove);
     }, containerRef);
+
     return () => ctx.revert();
   }, []);
 
+
   return (
     <div ref={containerRef} className="relative overflow-hidden font-hind-siliguri">
-      <section className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+
+    {/* Hero Section */}
+    <section className="relative min-h-screen flex items-center justify-center pt-16 pb-16 overflow-hidden">
+        {/* Apple-style Grid Background */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_50%,#000_50%,transparent_100%)]"></div>
-          <div className="mouse-glow absolute top-0 left-0 w-[600px] h-[600px] rounded-full blur-[150px] opacity-0 dark:opacity-50 dark:bg-primary/15"></div>
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808022_1px,transparent_1px),linear-gradient(to_bottom,#80808022_1px,transparent_1px)] bg-[size:30px_30px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+          
+          {/* Mouse Glow Effect */}
+          <div className="mouse-glow absolute top-0 left-0 w-[500px] h-[500px] bg-primary/30 dark:bg-primary/20 rounded-full blur-[60px] dark:blur-[120px] pointer-events-none -translate-x-1/2 -translate-y-1/2 opacity-30 dark:opacity-60"></div>
+
+          {/* Floating Bubbles */}
+          <div className="hero-bubble-1 absolute top-[20%] left-[15%] w-12 h-12 rounded-full bg-primary/50 dark:bg-primary/30 blur-lg dark:blur-xl"></div>
+          <div className="hero-bubble-2 absolute top-[60%] right-[20%] w-16 h-16 rounded-full bg-primary/40 dark:bg-primary/20 blur-lg dark:blur-xl"></div>
+          <div className="hero-bubble-3 absolute bottom-[15%] left-[40%] w-10 h-10 rounded-full bg-primary/60 dark:bg-primary/40 blur-md dark:blur-lg"></div>
+          <div className="hero-bubble-4 absolute top-[40%] left-[80%] w-8 h-8 rounded-full bg-primary/50 dark:bg-primary/30 blur-sm dark:blur-md"></div>
+          <div className="hero-bubble-5 absolute bottom-[30%] left-[10%] w-14 h-14 rounded-full bg-primary/40 dark:bg-primary/20 blur-lg dark:blur-xl"></div>
         </div>
 
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-10 grid lg:grid-cols-12 gap-12 items-center py-20">
-          <div className="lg:col-span-7 text-center lg:text-left">
-            <div className="hero-badge inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-secondary/40 text-foreground/60 text-[11px] font-bold mb-10 border border-border/30 backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="uppercase tracking-[0.15em]">বাংলাদেশের ১ নম্বর আইইএলটিএস প্ল্যাটফর্ম</span>
+        {/* Animated Background Blobs */}
+        <div className="absolute top-1/4 -left-20 w-64 h-64 bg-primary/5 rounded-full blur-[40px] dark:blur-[100px] bg-blob opacity-20 pointer-events-none"></div>
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-primary/5 rounded-full blur-[50px] dark:blur-[120px] bg-blob opacity-20 pointer-events-none"></div>
+        
+        <div className="container max-w-4xl mx-auto px-4 relative z-10">
+          <div className="hero-content text-center">
+            <div className="hero-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/50 text-foreground/50 text-[10px] font-bold mb-8 border border-border/20 backdrop-blur-md">
+              <Sparkles className="h-3 w-3 text-primary" />
+              <span className="uppercase tracking-wider">বাংলাদেশের ১ নম্বর আইইএলটিএস প্ল্যাটফর্ম</span>
             </div>
 
-            <h1 className="hero-title text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-[0.95] mb-8 tracking-[-0.04em]">
-              <span className="block mb-2">আপনার বিদেশের স্বপ্ন</span>
-              <span className="block gradient-text bg-clip-text text-transparent pb-3">এখন হাতের মুঠোয়</span>
+            <h1 className="hero-title text-4xl md:text-5xl lg:text-7xl font-black leading-[1] mb-6 tracking-[-0.06em]">
+              <span className="block mb-1">আপনার বিদেশের স্বপ্ন</span>
+              <span className="block gradient-text bg-clip-text text-transparent pb-2">এখন হাতের মুঠোয়</span>
             </h1>
 
-            <p className="hero-desc text-base sm:text-lg md:text-xl text-muted-foreground/70 leading-relaxed mb-12 max-w-2xl font-medium tracking-tight">
-              প্র্যাকটিস, লাইভ মক, ভোকাব ও এআই রাইটিং—সব এক প্ল্যাটফর্মে। ফ্রি সেকশন থেকে শুরু করুন, চাইলে প্রিমিয়াম নিন।
+            <p className="hero-desc text-sm md:text-base text-muted-foreground/80 leading-relaxed mb-10 max-w-md mx-auto font-medium tracking-tight">
+              আসল পরীক্ষার মতো মক টেস্ট দিন। এআই প্রযুক্তির মাধ্যমে তাৎক্ষণিক ফলাফল এবং ফিডব্যাক পেয়ে আপনার আইইএলটিএস ব্যান্ড স্কোর নিশ্চিত করুন।
             </p>
 
-            <div className="hero-cta-btn flex flex-col sm:flex-row gap-4 mb-14">
-              <Button asChild size="lg" className="h-16 px-10 text-lg font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-all group">
-                <Link href="/free" className="flex items-center gap-3">
-                  ফ্রি শুরু করুন
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            <div className="hero-cta-btn flex justify-center mb-12">
+              <Button asChild size="lg" className="h-12 px-8 text-sm font-bold rounded-xl shadow-xl dark:shadow-primary/20 hover:scale-105 transition-all duration-500 active:scale-95 group">
+                <Link href="/pricing" className="flex items-center gap-2">
+                  মক টেস্ট শুরু করুন
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="h-16 px-10 text-lg font-black rounded-2xl border-border/50">
-                <Link href="/pricing">প্রাইসিং দেখুন</Link>
-              </Button>
             </div>
 
-            <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-              <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-primary/10 border border-primary/20 backdrop-blur-xl">
-                <Users className="h-5 w-5 text-primary animate-pulse" />
-                <span className="text-sm font-black">{presenceCount > 0 ? presenceCount + 450 : 500}+ জন এখন লাইভ আছেন</span>
-              </div>
-              <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 backdrop-blur-xl">
-                <Trophy className="h-5 w-5 text-orange-500" />
-                <span className="text-sm font-black">১০০০+ সফল স্টুডেন্ট</span>
-              </div>
+            <div className="hero-benefits flex flex-wrap justify-center gap-4 md:gap-6">
+              {[
+                { icon: <Zap className="h-3.5 w-3.5" />, text: "তাৎক্ষণিক ফলাফল" },
+                { icon: <Target className="h-3.5 w-3.5" />, text: "সঠিক ব্যান্ড প্রেডিকশন" },
+                { icon: <Award className="h-3.5 w-3.5" />, text: "এক্সপার্ট গাইডেন্স" },
+              ].map((benefit, i) => (
+                <div key={i} className="benefit-badge flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/30 border border-border/20 text-[11px] font-bold text-muted-foreground/90 backdrop-blur-md hover:bg-secondary/50 transition-colors cursor-default">
+                  <div className="text-primary">{benefit.icon}</div>
+                  <span>{benefit.text}</span>
+                </div>
+              ))}
             </div>
-          </div>
-
-          <div className="lg:col-span-5">
-            <RecentActivityTicker />
           </div>
         </div>
-
-        {showBanner && liveTest && bannerConfig && (
-          <div className="live-mock-box fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] sm:w-full max-w-xl group">
-            <div className={`relative overflow-hidden p-4 sm:p-5 rounded-[2rem] backdrop-blur-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] border transition-all duration-500 hover:scale-[1.01] ${
-              liveTest.isLive ? 'bg-background/95 border-red-500/30' : 'bg-background/95 dark:bg-card/95 border-primary/20'
-            }`}>
-              <button onClick={() => setShowBanner(false)} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-secondary/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all z-30"><X className="h-3 w-3" /></button>
-              <div className="flex items-center gap-4 sm:gap-6 relative z-10">
-                {bannerConfig.showTimer && <div className={`flex-shrink-0 p-3 sm:p-4 rounded-2xl border flex flex-col items-center justify-center min-w-[120px] ${liveTest.isLive ? 'bg-red-500/10 border-red-500/20' : 'bg-primary/[0.03] border-primary/10'}`}>{timeDisplay}</div>}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className={`h-1.5 w-1.5 rounded-full ${liveTest.isLive ? 'bg-red-500 animate-pulse' : 'bg-primary'}`}></div>
-                    <span className={`text-[9px] font-bold uppercase tracking-[0.2em] ${liveTest.isLive ? 'text-red-600' : 'text-muted-foreground'}`}>{bannerConfig.label}</span>
-                  </div>
-                  <h4 className="text-sm sm:text-base font-black mb-1 truncate">{liveTest.title}</h4>
-                  <p className="text-[11px] font-medium text-muted-foreground truncate">{bannerConfig.description}</p>
-                </div>
-                <div className="shrink-0">
-                  <Button asChild disabled={bannerConfig.buttonDisabled} size="sm" className={`h-10 px-6 text-[10px] font-black rounded-xl transition-all shadow-lg ${liveTest.isLive ? 'bg-[#74b602] hover:bg-[#86d102] text-black shadow-[#74b602]/20' : 'bg-primary hover:bg-primary/90 shadow-primary/20'}`}><Link href={bannerConfig.buttonHref} className="flex items-center gap-2">{bannerConfig.buttonText}<ArrowRight className="h-3 w-3" /></Link></Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </section>
 
       <section className="py-20 bg-secondary/5 border-y border-border/30">
